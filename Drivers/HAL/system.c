@@ -29,13 +29,6 @@ static void system_clock_init(void)
     OSCCTRL_REGS->OSCCTRL_XOSCCTRL[1] |= OSCCTRL_XOSCCTRL_ENABLE(1);    // oscillator enable
     while (!(OSCCTRL_REGS->OSCCTRL_STATUS & OSCCTRL_STATUS_XOSCRDY1_Msk)); // wait for XOSC1 ready
 
-    // GCLK 0 set Internal oscillator 48MHz
-    // GCLK_REGS->GCLK_GENCTRL[0] |= GCLK_GENCTRL_DIV(2);
-    // GCLK_REGS->GCLK_GENCTRL[0] |= GCLK_GENCTRL_SRC(8);
-    // GCLK_REGS->GCLK_GENCTRL[0] |= GCLK_GENCTRL_IDC(1);
-    // GCLK_REGS->GCLK_GENCTRL[0] |= GCLK_GENCTRL_GENEN(1);
-    // while (GCLK_REGS->GCLK_SYNCBUSY & GCLK_SYNCBUSY_GENCTRL_GCLK0); // wait gclk 0 sync
-
     // GCLK 2 set External oscillator 12MHz
     GCLK_REGS->GCLK_GENCTRL[2] |= GCLK_GENCTRL_DIV(1); // gclk 2 output = src clk / 1
     GCLK_REGS->GCLK_GENCTRL[2] |= GCLK_GENCTRL_SRC(1); // gclk 2 use xosc1 as source
@@ -87,13 +80,13 @@ static void system_power_deinit(void)
 
 static void system_uart0_init(void)
 {
-    // uart0 pin multiplexer set
+    // UART0 pin multiplexer set
     PORT_REGS->GROUP[0].PORT_PMUX[2] |= PORT_PMUX_PMUXE_D; // set PA4 as function D (SERCOM0)
     PORT_REGS->GROUP[0].PORT_PINCFG[4] |= PORT_PINCFG_PMUXEN(1); // set PA4 PMUXEN
     PORT_REGS->GROUP[0].PORT_PMUX[3] |= PORT_PMUX_PMUXE_D; // set PA6 as function D (SERCOM0)
     PORT_REGS->GROUP[0].PORT_PINCFG[6] |= PORT_PINCFG_PMUXEN(1); // set PA6 PMUXEN
 
-    // uart0 init
+    // UART0 init
     SERCOM0_REGS->USART_INT.SERCOM_CTRLA |= SERCOM_USART_INT_CTRLA_MODE_USART_INT_CLK;
     SERCOM0_REGS->USART_INT.SERCOM_CTRLA |= SERCOM_USART_INT_CTRLA_RXPO_PAD2;
     SERCOM0_REGS->USART_INT.SERCOM_CTRLA |= SERCOM_USART_INT_CTRLA_DORD_LSB;
@@ -110,7 +103,7 @@ static void system_uart0_init(void)
 
 static void system_uart0_deinit(void)
 {
-    // uart reset
+    // UART0 reset
     SERCOM0_REGS->USART_INT.SERCOM_CTRLA &= ~SERCOM_USART_INT_CTRLA_ENABLE(1);
     while (SERCOM0_REGS->USART_INT.SERCOM_SYNCBUSY & \
             (SERCOM_USART_INT_SYNCBUSY_SWRST_Msk | SERCOM_USART_INT_SYNCBUSY_ENABLE_Msk));
@@ -118,11 +111,71 @@ static void system_uart0_deinit(void)
     SERCOM0_REGS->USART_INT.SERCOM_CTRLA |= SERCOM_USART_INT_CTRLA_SWRST(1);
     while (SERCOM0_REGS->USART_INT.SERCOM_SYNCBUSY & SERCOM_USART_INT_SYNCBUSY_SWRST_Msk);
 
-    // uart0 pin reset
+    // UART0 pin reset
     PORT_REGS->GROUP[0].PORT_PMUX[2] &= ~PORT_PMUX_PMUXE_D; // set PA4 as function D (SERCOM0)
     PORT_REGS->GROUP[0].PORT_PINCFG[4] &= ~PORT_PINCFG_PMUXEN(1); // set PA4 PMUXEN
     PORT_REGS->GROUP[0].PORT_PMUX[3] &= ~PORT_PMUX_PMUXE_D; // set PA6 as function D (SERCOM0)
     PORT_REGS->GROUP[0].PORT_PINCFG[6] &= ~PORT_PINCFG_PMUXEN(1); // set PA6 PMUXEN
+}
+
+/**
+ * @brief For External Flash - w25q128jv
+ * 
+ *  FLASH_MOSI  : PC04
+ *  FLASH_SCK   : PC05
+ *  FLASH_MISO  : PC07
+ *  FLASH_CS    : PB02
+ * 
+ */
+static void system_spi_init(void)
+{
+    // SPI6 pin multiplexer set
+    // PC4, PC5, PC6, PC7 as function C (SERCOM6)
+    // TODO: change flash cs pin from PB2 to PC6.
+    PORT_REGS->GROUP[2].PORT_PMUX[2] |= (PORT_PMUX_PMUXE_C | PORT_PMUX_PMUXO_C);
+    PORT_REGS->GROUP[2].PORT_PMUX[3] |= (PORT_PMUX_PMUXE_C | PORT_PMUX_PMUXO_C);
+    PORT_REGS->GROUP[2].PORT_PINCFG[4] |= PORT_PINCFG_PMUXEN(1); // set PC4 PMUXEN
+    PORT_REGS->GROUP[2].PORT_PINCFG[5] |= PORT_PINCFG_PMUXEN(1); // set PC5 PMUXEN
+    PORT_REGS->GROUP[2].PORT_PINCFG[7] |= PORT_PINCFG_PMUXEN(1); // set PC7 PMUXEN
+
+    // Set PB2 as output, for FLASH_CS.
+    PORT_REGS->GROUP[1].PORT_DIRSET |= PORT_DIRSET_DIRSET(1 << 2);
+    PORT_REGS->GROUP[1].PORT_OUTSET |= PORT_OUTSET_OUTSET(1 << 2);
+
+    // Peripheral clock set
+    GCLK_REGS->GCLK_PCHCTRL[36] |= GCLK_PCHCTRL_GEN_GCLK2;  // select gclk 2 as source
+    GCLK_REGS->GCLK_PCHCTRL[36] |= GCLK_PCHCTRL_CHEN(1);
+
+    // MCLK set
+    MCLK_REGS->MCLK_APBDMASK |= MCLK_APBDMASK_SERCOM6(1);   // sercom 6 bus open
+
+    // SPI setting
+    SERCOM6_REGS->SPIM.SERCOM_CTRLB |= SERCOM_SPIM_CTRLB_RXEN(1);
+    SERCOM6_REGS->SPIM.SERCOM_CTRLA |= SERCOM_SPIM_CTRLA_MODE(3);
+    SERCOM6_REGS->SPIM.SERCOM_CTRLA |= SERCOM_SPIM_CTRLA_DIPO(3);
+
+    // SPI soft reset
+    SERCOM6_REGS->SPIM.SERCOM_CTRLA |= SERCOM_SPIM_CTRLA_ENABLE(1);
+}
+
+static void system_spi_deinit(void)
+{
+    SERCOM6_REGS->SPIM.SERCOM_CTRLA &= ~SERCOM_SPIM_CTRLA_SWRST(1);
+
+    SERCOM6_REGS->SPIM.SERCOM_CTRLA = 0;
+    SERCOM6_REGS->SPIM.SERCOM_CTRLB = 0;
+
+    MCLK_REGS->MCLK_APBDMASK &= ~MCLK_APBDMASK_SERCOM6(1);
+    GCLK_REGS->GCLK_PCHCTRL[36] = 0;
+
+    PORT_REGS->GROUP[1].PORT_OUTCLR |= PORT_OUTCLR_OUTCLR(1 << 2);
+    PORT_REGS->GROUP[1].PORT_DIRCLR |= PORT_DIRCLR_DIRCLR(1 << 2);
+
+    PORT_REGS->GROUP[2].PORT_PINCFG[4] &= ~PORT_PINCFG_PMUXEN(1);
+    PORT_REGS->GROUP[2].PORT_PINCFG[5] &= ~PORT_PINCFG_PMUXEN(1);
+    PORT_REGS->GROUP[2].PORT_PINCFG[7] &= ~PORT_PINCFG_PMUXEN(1);
+    PORT_REGS->GROUP[2].PORT_PMUX[2] &= ~(PORT_PMUX_PMUXE_C | PORT_PMUX_PMUXO_C);
+    PORT_REGS->GROUP[2].PORT_PMUX[3] &= ~(PORT_PMUX_PMUXE_C | PORT_PMUX_PMUXO_C);
 }
 
 /*******************************************************************************
@@ -134,6 +187,7 @@ void system_init(void)
     system_clock_init();
     system_power_init();
     system_uart0_init();
+    system_spi_init();
     systick_enable();
 }
 
@@ -142,4 +196,6 @@ void system_deinit(void)
     system_uart0_deinit();
     system_power_deinit();
     system_clock_deinit();
+    system_spi_deinit();
+    // TODO: Systick disable
 }

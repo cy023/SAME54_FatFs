@@ -2,7 +2,7 @@
 # @file   Makefile
 # @author cy023@MVMC-Lab (cyyang023@gmail.com)
 # @date   2022.07.23
-# @brief  Makefile for SAME54ETH project.
+# @brief  Makefile for SAME54_GCC project.
 
 ################################################################################
 # User Settings
@@ -13,9 +13,10 @@ TARGET = main
 
 # Upload Info.
 COMPORT    ?= COM17
-UPLOAD_HEX ?= main
+# UPLOAD_HEX ?= main
 # UPLOAD_HEX ?= test_00_uart
 # UPLOAD_HEX ?= test_01_sysnow
+UPLOAD_HEX ?= test_02_flash
 
 
 ## MCU Info.
@@ -42,11 +43,13 @@ C_INCLUDES  = -I.
 C_INCLUDES += -ICore
 C_INCLUDES += -IDrivers/HAL
 C_INCLUDES += -IDrivers/CMSIS
+C_INCLUDES += -IDrivers/w25q128jv
 C_INCLUDES += -IDrivers/SAME54_DFP
 
 ## Source Path
 C_SOURCES += $(wildcard Device_Startup/*.c)
 C_SOURCES += $(wildcard Drivers/HAL/*.c)
+C_SOURCES += $(wildcard Drivers/w25q128jv/*.c)
 
 ################################################################################
 # Project Architecture
