@@ -12,11 +12,12 @@
 TARGET = main
 
 # Upload Info.
-COMPORT    ?= COM17
+COMPORT    ?= 
 # UPLOAD_HEX ?= main
 # UPLOAD_HEX ?= test_00_uart
 # UPLOAD_HEX ?= test_01_sysnow
 UPLOAD_HEX ?= test_02_flash
+# UPLOAD_HEX ?= test_03_littlefs
 
 
 ## MCU Info.
@@ -45,11 +46,13 @@ C_INCLUDES += -IDrivers/HAL
 C_INCLUDES += -IDrivers/CMSIS
 C_INCLUDES += -IDrivers/w25q128jv
 C_INCLUDES += -IDrivers/SAME54_DFP
+C_INCLUDES += -IMiddleware/LittleFS
 
 ## Source Path
 C_SOURCES += $(wildcard Device_Startup/*.c)
 C_SOURCES += $(wildcard Drivers/HAL/*.c)
 C_SOURCES += $(wildcard Drivers/w25q128jv/*.c)
+C_SOURCES += $(wildcard Middleware/LittleFS/*.c)
 
 ################################################################################
 # Project Architecture

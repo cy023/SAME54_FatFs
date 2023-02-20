@@ -1,58 +1,58 @@
-int main(){}
-#if 0
+/**
+ * @file test_03_littlefs.c
+ * @author cy023
+ * @date 2023.02.18
+ * @brief 
+ * 
+ */
+
+#include <stdio.h>
+#include "system.h"
+#include "systick.h"
+#include "delay.h"
 #include "lfs.h"
-
-// variables used by the filesystem
-lfs_t lfs;
-lfs_file_t file;
-
-// configuration of the filesystem is provided by this struct
-const struct lfs_config cfg = {
-    // block device operations
-    .read  = user_provided_block_device_read,
-    .prog  = user_provided_block_device_prog,
-    .erase = user_provided_block_device_erase,
-    .sync  = user_provided_block_device_sync,
-
-    // block device configuration
-    .read_size = 16,
-    .prog_size = 16,
-    .block_size = 4096,
-    .block_count = 128,
-    .cache_size = 16,
-    .lookahead_size = 16,
-    .block_cycles = 500,
-};
+#include "lfs_port.h"
 
 // entry point
-int main(void) {
+void lfs_test(void)
+{
     // mount the filesystem
-    int err = lfs_mount(&lfs, &cfg);
+    int err = lfs_mount(&lfs_w25q128jv, &cfg);
 
     // reformat if we can't mount the filesystem
     // this should only happen on the first boot
     if (err) {
-        lfs_format(&lfs, &cfg);
-        lfs_mount(&lfs, &cfg);
+        lfs_format(&lfs_w25q128jv, &cfg);
+        lfs_mount(&lfs_w25q128jv, &cfg);
     }
 
     // read current count
     uint32_t boot_count = 0;
-    lfs_file_open(&lfs, &file, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
-    lfs_file_read(&lfs, &file, &boot_count, sizeof(boot_count));
+    lfs_file_open(&lfs_w25q128jv, &lfs_file_w25q128jv, "boot_count", LFS_O_RDWR | LFS_O_CREAT);
+    lfs_file_read(&lfs_w25q128jv, &lfs_file_w25q128jv, &boot_count, sizeof(boot_count));
 
     // update boot count
     boot_count += 1;
-    lfs_file_rewind(&lfs, &file);
-    lfs_file_write(&lfs, &file, &boot_count, sizeof(boot_count));
+    lfs_file_rewind(&lfs_w25q128jv, &lfs_file_w25q128jv);
+    lfs_file_write(&lfs_w25q128jv, &lfs_file_w25q128jv, &boot_count, sizeof(boot_count));
 
     // remember the storage is not updated until the file is closed successfully
-    lfs_file_close(&lfs, &file);
+    lfs_file_close(&lfs_w25q128jv, &lfs_file_w25q128jv);
 
     // release any resources we were using
-    lfs_unmount(&lfs);
+    lfs_unmount(&lfs_w25q128jv);
 
     // print the boot count
-    printf("boot_count: %d\n", boot_count);
+    printf("boot_count: %ld\n", boot_count);
 }
-#endif
+
+// entry point
+int main(void)
+{
+    system_init();
+    printf("System Boot.\n");
+    printf("[test03]: LittleFS ...\n\n");
+
+    lfs_test();
+    return 0;
+}
