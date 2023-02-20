@@ -7,10 +7,9 @@
  * // TODO: SysTick_Config() ?
  */
 
+#include "same54p20a.h"
+#include <stdint.h>
 #include "systick.h"
-#include "Drivers/SAME54_DFP/same54p20a.h"
-#include "Drivers/SAME54_BSP/Config/peripheral_clk_config.h"
-#include "Drivers/CMSIS/core_cm4.h"
 
 static volatile uint32_t systick_timems = 0;
 

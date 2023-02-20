@@ -4,7 +4,6 @@
  * @brief Systick driver
  * @date 2022.08.16
  * 
- * // TODO : Why inttypes.h?
  */
 
 #ifndef SYSTICK_H
