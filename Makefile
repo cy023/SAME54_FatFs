@@ -12,12 +12,13 @@
 TARGET = main
 
 # Upload Info.
-COMPORT    ?= 
+COMPORT    ?= COM17
 # UPLOAD_HEX ?= main
 # UPLOAD_HEX ?= test_00_uart
 # UPLOAD_HEX ?= test_01_sysnow
-UPLOAD_HEX ?= test_02_flash
+# UPLOAD_HEX ?= test_02_flash
 # UPLOAD_HEX ?= test_03_littlefs
+UPLOAD_HEX ?= test_04_fs_rw_image
 
 
 ## MCU Info.
